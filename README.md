@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/nsvk13-forgejo-mcp-server-badge.png)](https://mseep.ai/app/nsvk13-forgejo-mcp-server)
+
 # Forgejo MCP Server
 
 A Model Context Protocol (MCP) server that provides Claude Desktop with tools to interact with Forgejo repositories.
