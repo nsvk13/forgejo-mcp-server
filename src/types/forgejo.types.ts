@@ -43,3 +43,23 @@ export interface FileContent {
   type: string;
   encoding: string;
 }
+
+export interface PullRequest {
+  id: number;
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  html_url: string;
+  merged: boolean;
+  mergeable?: boolean;
+  head: { ref: string; label: string };
+  base: { ref: string; label: string };
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: number;
+    login: string;
+    full_name: string;
+  };
+}
