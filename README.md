@@ -13,6 +13,7 @@ A Model Context Protocol (MCP) server that provides Claude Desktop with tools to
 - List issues with filtering by state
 - Create new issues
 - Read file contents from repositories
+- List, view, and create pull requests
 
 ## Installation
 
@@ -79,6 +80,9 @@ After configuration, restart Claude Desktop. You can then use commands like:
 - `list_issues`: List issues with optional state filtering
 - `create_issue`: Create a new issue
 - `get_file_content`: Read file contents from repository
+- `list_pull_requests`: List pull requests with optional state filtering
+- `get_pull_request`: Get a single pull request by its number
+- `create_pull_request`: Open a new pull request from a head branch into a base branch
 
 ## Development
 

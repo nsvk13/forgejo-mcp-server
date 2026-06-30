@@ -8,11 +8,12 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { 
+import type {
   ForgejoConfig,
   Repository,
   Issue,
-  FileContent
+  FileContent,
+  PullRequest
 } from './types/forgejo.types';
 
 class ForgejoMCPServer {
@@ -140,6 +141,53 @@ class ForgejoMCPServer {
             required: ['owner', 'repo', 'path'],
           },
         },
+        {
+          name: 'list_pull_requests',
+          description: 'Get list of repository pull requests',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              owner: { type: 'string', description: 'Repository owner' },
+              repo: { type: 'string', description: 'Repository name' },
+              state: {
+                type: 'string',
+                enum: ['open', 'closed', 'all'],
+                description: 'Pull request state',
+                default: 'open'
+              },
+            },
+            required: ['owner', 'repo'],
+          },
+        },
+        {
+          name: 'get_pull_request',
+          description: 'Get a single pull request by its number',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              owner: { type: 'string', description: 'Repository owner' },
+              repo: { type: 'string', description: 'Repository name' },
+              index: { type: 'number', description: 'Pull request number' },
+            },
+            required: ['owner', 'repo', 'index'],
+          },
+        },
+        {
+          name: 'create_pull_request',
+          description: 'Open a new pull request from a head branch into a base branch',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              owner: { type: 'string', description: 'Repository owner' },
+              repo: { type: 'string', description: 'Repository name' },
+              title: { type: 'string', description: 'Pull request title' },
+              head: { type: 'string', description: 'Source branch (the branch with your changes)' },
+              base: { type: 'string', description: 'Target branch to merge into' },
+              body: { type: 'string', description: 'Pull request description' },
+            },
+            required: ['owner', 'repo', 'title', 'head', 'base'],
+          },
+        },
       ],
     }));
 
@@ -159,7 +207,16 @@ class ForgejoMCPServer {
         
         case 'get_file_content':
           return this.getFileContent(request.params.arguments);
-        
+
+        case 'list_pull_requests':
+          return this.listPullRequests(request.params.arguments);
+
+        case 'get_pull_request':
+          return this.getPullRequest(request.params.arguments);
+
+        case 'create_pull_request':
+          return this.createPullRequest(request.params.arguments);
+
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -264,6 +321,72 @@ class ForgejoMCPServer {
           text: `File: ${path} (branch: ${ref})\n` +
                 `Size: ${fileData.size} bytes\n\n` +
                 `Content:\n\`\`\`\n${content}\n\`\`\``,
+        },
+      ],
+    };
+  }
+
+  private async listPullRequests(args: any) {
+    const { owner, repo, state = 'open' } = args;
+    const prs = await this.forgejoRequest(
+      `/repos/${owner}/${repo}/pulls?state=${state}`
+    ) as PullRequest[];
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Pull requests in repository ${owner}/${repo} (${state}):\n\n` +
+                prs.map(pr =>
+                  `#${pr.number}: ${pr.title} [${pr.state}] (${pr.head.ref} → ${pr.base.ref})`
+                ).join('\n'),
+        },
+      ],
+    };
+  }
+
+  private async getPullRequest(args: any) {
+    const { owner, repo, index } = args;
+    const pr = await this.forgejoRequest(
+      `/repos/${owner}/${repo}/pulls/${index}`
+    ) as PullRequest;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `PR #${pr.number}: ${pr.title} [${pr.state}]\n` +
+                `${pr.head.ref} → ${pr.base.ref}\n` +
+                `Merged: ${pr.merged}\n` +
+                `URL: ${pr.html_url}\n\n` +
+                `${pr.body || 'No description'}`,
+        },
+      ],
+    };
+  }
+
+  private async createPullRequest(args: any) {
+    const { owner, repo, title, head, base, body = '' } = args;
+
+    const pr = await this.forgejoRequest(`/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title,
+        head,
+        base,
+        body,
+      }),
+    }) as PullRequest;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Pull request created successfully!\n` +
+                `Number: #${pr.number}\n` +
+                `Title: ${pr.title}\n` +
+                `${pr.head.ref} → ${pr.base.ref}\n` +
+                `URL: ${pr.html_url}`,
         },
       ],
     };
