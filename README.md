@@ -20,8 +20,8 @@ A Model Context Protocol (MCP) server that provides Claude Desktop with tools to
 ```bash
 git clone https://github.com/nsvk13/forgejo-mcp-server
 cd forgejo-mcp-server
-bun install
-bun run build
+npm install
+npm run build
 ```
 
 ## Configuration
@@ -88,14 +88,14 @@ After configuration, restart Claude Desktop. You can then use commands like:
 
 ```bash
 # Build the project
-bun run build
+npm run build
 
 # Run in development mode
-bun run dev
+npm run dev
 ```
 
 ## Requirements
 
-- Bun 1 or higher
+- Node.js 18 or higher
 - TypeScript
 - Valid Forgejo instance with API access
